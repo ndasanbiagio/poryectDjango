@@ -1,5 +1,6 @@
 from django.shortcuts import render
-from django.http import HttpResponse, HttpResponseNotFound
+from django.http import HttpResponse, HttpResponseNotFound, HttpResponseRedirect
+from django.urls import reverse
 
 # Create your views here.
 
@@ -32,7 +33,7 @@ from django.http import HttpResponse, HttpResponseNotFound
 
 
 
-# Mejorando el dinamismo - con un diccionario
+# Mejorando el dinamismo - con un diccionario - sin if/elif
 monthly_challenges = {
     "january": "Is January",
     "february": "Is February",
@@ -48,13 +49,35 @@ monthly_challenges = {
     "december": "Is December"
 }
 
+
 def monthly_challenges_by_number(request, month):
-    return HttpResponse(month)
+    months = list(monthly_challenges.keys())
+    if month > len(months):
+        return HttpResponseNotFound("<h2>Invalid month</h2>")
+    redirect_month = months[month - 1]
+    redirect_path = reverse("month-challenge", args=[redirect_month]) #/challenges/january - ex.
+    return HttpResponseRedirect(redirect_path)
 
 
 def monthly_challenge(request, month):
     try:
         challenge_text = monthly_challenges[month]
+        response_data = f"<h1>{challenge_text}</h1>"
+        return HttpResponse(response_data)
     except:
-        return HttpResponseNotFound("This month is not supported!")
-    return HttpResponse(challenge_text)
+        return HttpResponseNotFound("<h2>This month is not supported!</h2>")
+    
+
+#New view - Menu of the month
+
+def index(request):
+    list_items = ""
+    months = list(monthly_challenges.keys())
+    
+    for month in months:
+        capitalized_month = month.capitalize()
+        month_path = reverse("month-challenge", args=[month])
+        list_items += f"<li><a href=\"{month_path}\">{capitalized_month}</a></li>"
+    
+    responde_data =  f"<ul>{list_items}</ul>"
+    return HttpResponse(responde_data)
